@@ -1,0 +1,6 @@
+{
+  "name": "Drive Remote",
+  "description": "Smart vehicle & digital drive controller with remote start, keyless entry, live telemetry, interactive steering, climate controls, and remote diagnostics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
