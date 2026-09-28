@@ -292,6 +292,26 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /** Publishes the latest controller state at a bounded 30 Hz rate; latest state wins. */
+    private fun startTransmitLoop() {
+        transmitJob = viewModelScope.launch {
+            while (true) {
+                val state = _controllerState.value
+                val payload = GameRemoteProtocol.encode(state)
+                val result = DrivePacketTransmitter.sendUdpPacket(
+                    state.targetIp,
+                    state.targetPort,
+                    payload
+                )
+                _controllerState.value = _controllerState.value.copy(
+                    isTransmittingUdp = result.isSuccess,
+                    lastPacketSent = if (result.isSuccess) payload else _controllerState.value.lastPacketSent
+                )
+                delay(33L)
+            }
+        }
+    }
+
     // Room Database Device Operations
     fun selectVehicle(id: Long) {
         viewModelScope.launch {
