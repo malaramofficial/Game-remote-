@@ -14,6 +14,7 @@ import com.example.data.RemoteLog
 import com.example.data.VehicleDevice
 import com.example.network.DrivePacketTransmitter
 import com.example.network.GameRemoteProtocol
+import com.example.network.GameRemoteReceiver
 import com.example.ui.model.AppLanguage
 import com.example.ui.model.ControllerState
 import com.example.ui.model.Gear
@@ -77,6 +78,25 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
     private var hornJob: Job? = null
     private var telemetryJob: Job? = null
     private var transmitJob: Job? = null
+    private var localReceiver: GameRemoteReceiver? = null
+
+    private val _localTestRunning = MutableStateFlow(false)
+    val localTestRunning: StateFlow<Boolean> = _localTestRunning.asStateFlow()
+
+    private val _localPacketsReceived = MutableStateFlow(0L)
+    val localPacketsReceived: StateFlow<Long> = _localPacketsReceived.asStateFlow()
+
+    private val _localLastSequence = MutableStateFlow(-1L)
+    val localLastSequence: StateFlow<Long> = _localLastSequence.asStateFlow()
+
+    private val _localLastLatencyMs = MutableStateFlow<Long?>(null)
+    val localLastLatencyMs: StateFlow<Long?> = _localLastLatencyMs.asStateFlow()
+
+    private val _localReceiverConnected = MutableStateFlow(false)
+    val localReceiverConnected: StateFlow<Boolean> = _localReceiverConnected.asStateFlow()
+
+    private val _localSafeStateCount = MutableStateFlow(0L)
+    val localSafeStateCount: StateFlow<Long> = _localSafeStateCount.asStateFlow()
 
     init {
         startTelemetryLoop()
@@ -274,6 +294,51 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         logCommand("Cruise Control", if (!_controllerState.value.isCruiseControlOn) "Activated" else "Deactivated")
     }
 
+    fun startLocalTest() {
+        if (_localTestRunning.value) return
+        _controllerState.value = _controllerState.value.copy(
+            targetIp = "127.0.0.1",
+            targetPort = GameRemoteProtocol.DEFAULT_PORT
+        )
+        _localPacketsReceived.value = 0L
+        _localLastSequence.value = -1L
+        _localLastLatencyMs.value = null
+        _localSafeStateCount.value = 0L
+
+        val receiver = GameRemoteReceiver(
+            port = GameRemoteProtocol.DEFAULT_PORT,
+            scope = viewModelScope
+        )
+        localReceiver = receiver
+        receiver.start(
+            onState = { state ->
+                _localPacketsReceived.value += 1L
+                _localLastSequence.value = state.sequence
+                _localLastLatencyMs.value = (System.currentTimeMillis() - state.timestampMs).coerceAtLeast(0L)
+                _localReceiverConnected.value = true
+            },
+            onConnectionChanged = { connected ->
+                _localReceiverConnected.value = connected
+            },
+            onSafeState = {
+                _localSafeStateCount.value += 1L
+            }
+        )
+        _localTestRunning.value = true
+    }
+
+    fun stopLocalTest() {
+        localReceiver?.stop()
+        localReceiver = null
+        _localTestRunning.value = false
+        _localReceiverConnected.value = false
+        _controllerState.value = _controllerState.value.copy(
+            targetIp = "",
+            isTransmittingUdp = false
+        )
+        DrivePacketTransmitter.close()
+    }
+
     fun updateTargetAddress(ip: String, port: Int) {
         _controllerState.value = _controllerState.value.copy(
             targetIp = ip,
@@ -408,6 +473,8 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         hornJob?.cancel()
         telemetryJob?.cancel()
         transmitJob?.cancel()
+        localReceiver?.stop()
+        localReceiver = null
         DrivePacketTransmitter.close()
     }
 }
