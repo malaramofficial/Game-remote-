@@ -13,6 +13,7 @@ import com.example.data.DriveRemoteRepository
 import com.example.data.RemoteLog
 import com.example.data.VehicleDevice
 import com.example.network.DrivePacketTransmitter
+import com.example.network.GameRemoteProtocol
 import com.example.ui.model.AppLanguage
 import com.example.ui.model.ControllerState
 import com.example.ui.model.Gear
@@ -406,5 +407,7 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         super.onCleared()
         hornJob?.cancel()
         telemetryJob?.cancel()
+        transmitJob?.cancel()
+        DrivePacketTransmitter.close()
     }
 }
