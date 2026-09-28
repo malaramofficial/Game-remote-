@@ -237,7 +237,6 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         if (percent > 0) {
             triggerHaptic(20)
         }
-        transmitDrivePacket()
     }
 
     fun setBrake(percent: Float) {
@@ -245,14 +244,12 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         if (percent > 0) {
             triggerHaptic(40)
         }
-        transmitDrivePacket()
     }
 
     fun setGear(gear: Gear) {
         _controllerState.value = _controllerState.value.copy(gear = gear)
         triggerHaptic(50)
         logCommand("Gear Shifter", "Selected gear ${gear.label}")
-        transmitDrivePacket()
     }
 
     fun toggleHighBeam() {
