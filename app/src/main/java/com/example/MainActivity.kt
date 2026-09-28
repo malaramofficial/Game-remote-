@@ -67,6 +67,7 @@ import com.example.ui.screens.CarRemoteScreen
 import com.example.ui.screens.CloudMediaRemoteScreen
 import com.example.ui.screens.DevicesSettingsScreen
 import com.example.ui.screens.VirtualCockpitScreen
+import com.example.ui.screens.SinglePhoneTestScreen
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCardBg
 import com.example.ui.theme.CockpitDarkBg
@@ -102,6 +103,12 @@ fun DriveRemoteApp(
     val allVehicles by viewModel.allVehicles.collectAsStateWithLifecycle()
     val selectedVehicle by viewModel.selectedVehicle.collectAsStateWithLifecycle()
     val recentLogs by viewModel.recentLogs.collectAsStateWithLifecycle()
+    val localTestRunning by viewModel.localTestRunning.collectAsStateWithLifecycle()
+    val localPacketsReceived by viewModel.localPacketsReceived.collectAsStateWithLifecycle()
+    val localLastSequence by viewModel.localLastSequence.collectAsStateWithLifecycle()
+    val localLastLatencyMs by viewModel.localLastLatencyMs.collectAsStateWithLifecycle()
+    val localReceiverConnected by viewModel.localReceiverConnected.collectAsStateWithLifecycle()
+    val localSafeStateCount by viewModel.localSafeStateCount.collectAsStateWithLifecycle()
 
     val activeVehicle = selectedVehicle ?: allVehicles.firstOrNull()
 
@@ -287,6 +294,33 @@ fun DriveRemoteApp(
                 )
 
                 NavigationBarItem(
+                    selected = currentTab == NavTab.SINGLE_PHONE_TEST,
+                    onClick = { viewModel.setTab(NavTab.SINGLE_PHONE_TEST) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Wifi,
+                            contentDescription = "Single phone test"
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "TEST",
+                            fontSize = 10.sp,
+                            fontWeight = if (currentTab == NavTab.SINGLE_PHONE_TEST) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.Black,
+                        selectedTextColor = NeonCyan,
+                        indicatorColor = NeonCyan,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted
+                    ),
+                    modifier = Modifier.testTag("tab_single_phone_test")
+                )
+
+                NavigationBarItem(
                     selected = currentTab == NavTab.SETTINGS,
                     onClick = { viewModel.setTab(NavTab.SETTINGS) },
                     icon = {
@@ -365,6 +399,20 @@ fun DriveRemoteApp(
                     CloudMediaRemoteScreen(
                         language = language,
                         onCommandLogged = viewModel::logCommand
+                    )
+                }
+
+                NavTab.SINGLE_PHONE_TEST -> {
+                    SinglePhoneTestScreen(
+                        running = localTestRunning,
+                        receiverConnected = localReceiverConnected,
+                        packetsReceived = localPacketsReceived,
+                        lastSequence = localLastSequence,
+                        lastLatencyMs = localLastLatencyMs,
+                        safeStateCount = localSafeStateCount,
+                        controllerState = controllerState,
+                        onStart = viewModel::startLocalTest,
+                        onStop = viewModel::stopLocalTest
                     )
                 }
 
