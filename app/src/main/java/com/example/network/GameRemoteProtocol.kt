@@ -26,34 +26,37 @@ object GameRemoteProtocol {
             .put("cruise", state.isCruiseControlOn)
             .toString()
 
-    fun decode(payload: String): ReceivedControllerState? = try {
-        if (payload.toByteArray(Charsets.UTF_8).size > MAX_PACKET_BYTES) return null
-        val json = JSONObject(payload)
-        if (json.optInt("v", -1) != VERSION) return null
-        if (json.optString("type") != "controller_state") return null
-        val seq = json.optLong("seq", -1L)
-        val ts = json.optLong("ts", -1L)
-        if (seq < 0L || ts <= 0L) return null
+    fun decode(payload: String): ReceivedControllerState? {
+        return try {
+            if (payload.toByteArray(Charsets.UTF_8).size > MAX_PACKET_BYTES) return null
+            val json = JSONObject(payload)
+            if (json.optInt("v", -1) != VERSION) return null
+            if (json.optString("type") != "controller_state") return null
 
-        val steer = json.optDouble("steer", Double.NaN).toFloat()
-        val throttle = json.optDouble("throttle", Double.NaN).toFloat()
-        val brake = json.optDouble("brake", Double.NaN).toFloat()
-        if (!steer.isFinite() || !throttle.isFinite() || !brake.isFinite()) return null
-        if (steer !in -1f..1f || throttle !in 0f..1f || brake !in 0f..1f) return null
+            val seq = json.optLong("seq", -1L)
+            val ts = json.optLong("ts", -1L)
+            if (seq < 0L || ts <= 0L) return null
 
-        ReceivedControllerState(
-            sequence = seq,
-            timestampMs = ts,
-            steering = steer,
-            throttle = throttle,
-            brake = brake,
-            gear = json.optString("gear", "P"),
-            highBeam = json.optBoolean("highBeam", false),
-            nitro = json.optBoolean("nitro", false),
-            cruise = json.optBoolean("cruise", false)
-        )
-    } catch (_: Exception) {
-        null
+            val steer = json.optDouble("steer", Double.NaN).toFloat()
+            val throttle = json.optDouble("throttle", Double.NaN).toFloat()
+            val brake = json.optDouble("brake", Double.NaN).toFloat()
+            if (!steer.isFinite() || !throttle.isFinite() || !brake.isFinite()) return null
+            if (steer !in -1f..1f || throttle !in 0f..1f || brake !in 0f..1f) return null
+
+            ReceivedControllerState(
+                sequence = seq,
+                timestampMs = ts,
+                steering = steer,
+                throttle = throttle,
+                brake = brake,
+                gear = json.optString("gear", "P"),
+                highBeam = json.optBoolean("highBeam", false),
+                nitro = json.optBoolean("nitro", false),
+                cruise = json.optBoolean("cruise", false)
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 }
 
