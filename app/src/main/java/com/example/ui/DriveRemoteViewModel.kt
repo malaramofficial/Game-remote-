@@ -75,9 +75,11 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
 
     private var hornJob: Job? = null
     private var telemetryJob: Job? = null
+    private var transmitJob: Job? = null
 
     init {
         startTelemetryLoop()
+        startTransmitLoop()
     }
 
     fun setTab(tab: NavTab) {
@@ -228,7 +230,6 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
     // Virtual Cockpit Driving Controls
     fun setSteeringAngle(angle: Float) {
         _controllerState.value = _controllerState.value.copy(steeringAngle = angle)
-        transmitDrivePacket()
     }
 
     fun setThrottle(percent: Float) {
