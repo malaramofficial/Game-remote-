@@ -1,0 +1,63 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test and build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Verify project
+        run: |
+          gradle --version
+          test -f settings.gradle.kts
+          test -f app/build.gradle.kts
+
+      - name: Run unit tests
+        run: gradle testDebugUnitTest --stacktrace
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: game-remote-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Build summary
+        if: success()
+        run: |
+          echo "## Game Remote APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "Debug APK built successfully." >> "$GITHUB_STEP_SUMMARY"
+          ls -lh app/build/outputs/apk/debug/*.apk >> "$GITHUB_STEP_SUMMARY"
