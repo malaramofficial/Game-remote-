@@ -282,16 +282,6 @@ class DriveRemoteViewModel(application: Application) : AndroidViewModel(applicat
         logCommand("Network Target", "Updated receiver address to $ip:$port")
     }
 
-    private fun transmitDrivePacket() {
-        val state = _controllerState.value
-        val payload = """{"steer":${state.steeringAngle.toInt()},"throttle":${state.throttlePercent.toInt()},"brake":${state.brakePercent.toInt()},"gear":"${state.gear.label}"}"""
-        
-        viewModelScope.launch {
-            DrivePacketTransmitter.sendUdpPacket(state.targetIp, state.targetPort, payload)
-            _controllerState.value = _controllerState.value.copy(lastPacketSent = payload)
-        }
-    }
-
     /** Publishes the latest controller state at a bounded 30 Hz rate; latest state wins. */
     private fun startTransmitLoop() {
         transmitJob = viewModelScope.launch {
