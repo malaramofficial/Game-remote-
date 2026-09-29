@@ -32,6 +32,7 @@ enum class NavTab {
     VEHICLE_KEY,
     COCKPIT_DRIVE,
     REMOTE_DECK,
+    SINGLE_PHONE_TEST,
     SETTINGS
 }
 
