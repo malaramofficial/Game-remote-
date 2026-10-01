@@ -9,9 +9,10 @@ enum class Gear(val label: String) {
 }
 
 data class ControllerState(
-    val steeringAngle: Float = 0f, // -90f (full left) to +90f (full right)
-    val throttlePercent: Float = 0f, // 0f to 100f
-    val brakePercent: Float = 0f, // 0f to 100f
+    val steeringAngle: Float = 0f,
+    val throttlePercent: Float = 0f,
+    val brakePercent: Float = 0f,
+    val clutchPercent: Float = 0f,
     val gear: Gear = Gear.PARK,
     val speedKmh: Float = 0f,
     val rpm: Int = 0,
