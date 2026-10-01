@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="game_input_accessibility_description">Game Remote: receives controller commands over local Wi-Fi and performs configured touch gestures in the foreground game.</string>
+</resources>
